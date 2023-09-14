@@ -33,7 +33,7 @@ class PlApp:
             dirpath=os.path.join(p['logs_dir'],p['name']), save_top_k=1, save_weights_only=False,
             filename=f"version={logger.version:02d}-" + "{epoch:02d}-{"+self.params['trainer']['monitor']+":.3f}"
         )
-        self.trainer = pl.Trainer(gpus=1, accelerator="gpu", max_epochs=self.params['trainer']['max_epochs'],
+        self.trainer = pl.Trainer(accelerator="gpu", max_epochs=self.params['trainer']['max_epochs'],
                                   benchmark=False, deterministic=True, num_sanity_val_steps=0,
                                   enable_model_summary=False, enable_progress_bar=True,
                                   logger=logger, callbacks=[checkpoint_callback],

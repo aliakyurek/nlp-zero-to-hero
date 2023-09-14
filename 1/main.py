@@ -10,8 +10,6 @@ from torch.utils import data
 import torch.nn.functional as F
 import base
 
-
-
 class CharacterDataSet(data.IterableDataset):
     def __init__(self, file_path):
         self.portion_size = 200
@@ -132,7 +130,7 @@ class TextGenerationExperiment(pl.LightningModule):
         self.log("train_loss", loss.item(), on_step=True, on_epoch=False, prog_bar=True) # on_step=True, on_epoch=True
         return loss
 
-    def training_epoch_end(self, outs):
+    def on_train_epoch_end(self):
         gen_text = self.generate("Th", predict_len=100, temperature=0.75)
 
         self.logger.experiment.add_text(tag="Generated", text_string=gen_text, global_step=self.global_step)

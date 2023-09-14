@@ -18,5 +18,5 @@ trainer:
 
 app:
   name: "lstm_generation"
-  logs_dir: "../logs"
+  logs_dir: "1/logs"
   manual_seed: 1234
