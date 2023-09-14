@@ -11,7 +11,7 @@ def init_env(script_dir,yml_file):
     torch.cuda.empty_cache()
     return params
 
-class Plapp:
+class PlApp:
     def __init__(self, params, data_module, model, cls_experiment, ckpt_monitor=None, ckpt_path=None):
         self.ckpt_path = ckpt_path
         self.data_module = data_module

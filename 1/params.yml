@@ -3,7 +3,7 @@ model:
   hidden_size: 512
 
 data:
-  file_path: "data/covid19-faq.txt"
+  file_path: "1/covid19-faq.txt"
   portion_size: 200
   iters_per_step: 32
 
