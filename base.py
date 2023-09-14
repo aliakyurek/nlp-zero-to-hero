@@ -4,8 +4,8 @@ import yaml
 import torch
 import pytorch_lightning as pl
 
-def init_env(script_dir,yml_file):
-    with open(os.path.join(script_dir, yml_file), 'r') as file:
+def init_env(yml_file):
+    with open(yml_file,'r') as file:
         params = yaml.safe_load(file)
     pl.seed_everything(params['app']['manual_seed'])
     torch.cuda.empty_cache()

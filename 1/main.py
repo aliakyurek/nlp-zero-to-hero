@@ -8,10 +8,9 @@ import pytorch_lightning as pl
 from torch import nn
 from torch.utils import data
 import torch.nn.functional as F
-import sys
 import base
 
-CONFIG_DIR = "1/"
+
 
 class CharacterDataSet(data.IterableDataset):
     def __init__(self, file_path):
@@ -142,7 +141,7 @@ class TextGenerationExperiment(pl.LightningModule):
         return torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
 
-params = base.init_env(CONFIG_DIR, "params.yml")
+params = base.init_env("1/params.yml")
 p = params['data']
 data_module = CharacterDataModule(p['file_path'])
 p = params['model']
