@@ -1,0 +1,22 @@
+model:
+  embed_size: 128
+  hidden_size: 512
+
+data:
+  file_path: "1/covid19-faq.txt"
+  portion_size: 200
+  iters_per_step: 32
+
+experiment:
+  lr: 0.005
+
+trainer:
+  gpus: [1]
+  max_epochs: 20
+  monitor: "train_loss"
+  mode: "min"
+
+app:
+  name: "lstm_generation"
+  logs_dir: "1/logs"
+  manual_seed: 1234

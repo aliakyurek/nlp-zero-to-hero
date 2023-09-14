@@ -58,18 +58,18 @@ class LSTMGenerator(nn.Module):
     def __init__(self, input_output_size, embed_size, hidden_size):
         super().__init__()
         self.embed = nn.Embedding(num_embeddings=input_output_size, embedding_dim=embed_size)
-        self.rnn = nn.LSTMCell(input_size=embed_size, hidden_size=hidden_size)
+        self.rnn = nn.LSTM(input_size=embed_size, hidden_size=hidden_size)
         self.fc = nn.Linear(hidden_size, input_output_size)
 
     def forward(self, character, hidden_state, cell_state):
-        # character = 1
+        # character = [200]
         # embed layer accepts any shaped output. It just adds a new dimension containing embedded vector.
         embedded = self.embed(character)
-        # [embedding_dim]
+        # [200,embedding_dim]
 
-        # LSTMCell layer accepts [embedding_dim].
-        hidden_state, cell_state = self.rnn(embedded, (hidden_state, cell_state))
-        output = self.fc(hidden_state)
+        # LSTM layer accepts [200,embedding_dim].
+        output, (hidden_state, cell_state) = self.rnn(embedded, (hidden_state, cell_state))
+        output = self.fc(output)
         # hidden_state = [hidden_dim]
         # cell_state = [hidden_dim]
         # output = [input_output_size]
@@ -77,8 +77,9 @@ class LSTMGenerator(nn.Module):
         return output, (hidden_state, cell_state)
 
     def get_zero_states(self):
-        zero_hidden = torch.zeros(self.rnn.hidden_size).type_as(self.fc.weight)
-        zero_cell = torch.zeros(self.rnn.hidden_size).type_as(self.fc.weight)
+        # since we use 1 layer LSTM, we need to specify this while doing initial state creation
+        zero_hidden = torch.zeros(1,self.rnn.hidden_size).type_as(self.fc.weight)
+        zero_cell = torch.zeros(1,self.rnn.hidden_size).type_as(self.fc.weight)
         return (zero_hidden,zero_cell)
 
     def loss_func(self, outputs, targets):
@@ -92,18 +93,17 @@ class TextGenerationExperiment(pl.LightningModule):
 
     def generate(self, prime_input, predict_len=100, temperature=0.8):
         self.model.eval()
-        generations = []
+
         hidden, cell_state = self.model.get_zero_states()
         prime_tensor = CharacterDataSet.char_to_tensor(prime_input).to(hidden.device)
-        for t in prime_tensor:
-            generations.append(t.item())
-            with torch.no_grad():
-                output, (hidden, cell_state) = self.model(t, hidden, cell_state)
+        generations = [t.item() for t in prime_tensor]
+        with torch.no_grad():
+            output, (hidden, cell_state) = self.model(prime_tensor, hidden, cell_state)
 
         for _ in range(predict_len):
             # Sample from the network as a multinomial distribution
-            output_dist = output.div(temperature).exp()  # e^{logits / T}
-            t = torch.multinomial(output_dist, 1)[0]
+            output_dist = output[-1].div(temperature).exp()  # e^{logits / T}
+            t = torch.multinomial(output_dist, 1)
             generations.append(t.item())
             with torch.no_grad():
                 output, (hidden, cell_state) = self.model(t, hidden, cell_state)
@@ -119,14 +119,12 @@ class TextGenerationExperiment(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss = 0
-        inputs, targets = batch
+        inputs, targets = batch # inputs = [200], targets = [200]
         hidden_state, cell_state = self.model.get_zero_states()
 
-        for c in range(len(inputs)):
-            output, (hidden_state, cell_state) = self.model(inputs[c], hidden_state, cell_state)
-            loss += self.model.loss_func(output, targets[c])
+        output, _ = self.model(inputs, hidden_state, cell_state)
+        loss = self.model.loss_func(output, targets)
 
-        loss /= len(inputs)
         self.log("train_loss", loss.item(), on_step=True, on_epoch=False, prog_bar=True) # on_step=True, on_epoch=True
         return loss
 
