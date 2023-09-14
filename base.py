@@ -3,6 +3,8 @@ import yaml
 
 import torch
 import pytorch_lightning as pl
+from pytorch_lightning import loggers
+from pytorch_lightning.utilities import rank_zero_only
 
 def init_env(yml_file):
     with open(yml_file,'r') as file:
@@ -10,6 +12,12 @@ def init_env(yml_file):
     pl.seed_everything(params['app']['manual_seed'])
     torch.cuda.empty_cache()
     return params
+
+class TBLogger(loggers.TensorBoardLogger):
+    @rank_zero_only
+    def log_metrics(self, metrics, step):
+        metrics.pop('epoch', None)
+        return super().log_metrics(metrics, step)
 
 class PlApp:
     def __init__(self, params, data_module, model, cls_experiment, ckpt_monitor=None, ckpt_path=None):
@@ -25,7 +33,7 @@ class PlApp:
         else:
             self.experiment = cls_experiment(model=model, **self.params['experiment'])
 
-        logger = pl.loggers.TensorBoardLogger(save_dir=p['logs_dir'], name=p['name'], default_hp_metric=False,
+        logger = TBLogger(save_dir=p['logs_dir'], name=p['name'], default_hp_metric=False,
                                               version=None)
 
         checkpoint_callback = pl.callbacks.ModelCheckpoint(
