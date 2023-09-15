@@ -82,6 +82,7 @@ class LSTMGenerator(nn.Module):
         return (zero_hidden,zero_cell)
 
     def loss_func(self, outputs, targets):
+        # output = [input_output_size], targets = 1
         return F.cross_entropy(outputs,targets)
 
 class TextGenerationExperiment(pl.LightningModule):

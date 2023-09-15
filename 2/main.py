@@ -138,7 +138,7 @@ class TextGenerationExperiment(pl.LightningModule):
         return torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
 
-params = base.init_env("1/params.yml")
+params = base.init_env("2/params.yml")
 p = params['data']
 data_module = CharacterDataModule(p['file_path'])
 p = params['model']
