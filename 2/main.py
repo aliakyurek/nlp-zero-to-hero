@@ -61,26 +61,18 @@ class LSTMGenerator(nn.Module):
         self.rnn = nn.LSTM(input_size=embed_size, hidden_size=hidden_size)
         self.fc = nn.Linear(hidden_size, input_output_size)
 
-    def forward(self, characters, hidden_state, cell_state):
+    # characters [portion_size]
+    # hc_states ([1,hidden_dim],[1,hidden_dim])
+    def forward(self, characters, hc_states=None):
         # characters = [portion_size]
         # embed layer accepts any shaped output. It just adds a new dimension containing embedded vector.
-        embedded = self.embed(characters)
-        # [portion_size,embedding_dim]
+        embedded = self.embed(characters)  # [portion_size,embedding_dim]
 
         # LSTM layer accepts [portion_size,embedding_dim].
-        output, (hidden_state, cell_state) = self.rnn(embedded, (hidden_state, cell_state))
+        output, hc_states = self.rnn(embedded, hc_states) # output [portion_size,embedding_dim], hc_states ([1,hidden_dim],[1,hidden_dim])
         output = self.fc(output)
-        # hidden_state = [1,hidden_dim]
-        # cell_state = [1,hidden_dim]
-        # output = [portion_size,input_output_size] while training, [1,input_output_size] while inferencing
-
-        return output, (hidden_state, cell_state)
-
-    def get_zero_states(self):
-        # since we use 1 layer LSTM, we need to specify this during initial state creation
-        zero_hidden = torch.zeros(1,self.rnn.hidden_size).type_as(self.fc.weight)
-        zero_cell = torch.zeros(1,self.rnn.hidden_size).type_as(self.fc.weight)
-        return (zero_hidden,zero_cell)
+        # output = [1,input_output_size] while inferencing
+        return output, hc_states
 
     def loss_func(self, outputs, targets):
         return F.cross_entropy(outputs,targets)
@@ -91,47 +83,37 @@ class TextGenerationExperiment(pl.LightningModule):
         self.model = model
         self.lr = lr
 
-    def generate(self, prime_input, predict_len=100, temperature=0.8):
-        self.model.eval()
-
-        hidden, cell_state = self.model.get_zero_states()
-        prime_tensor = CharacterDataSet.char_to_tensor(prime_input).to(hidden.device)
+    # prime_input = text like "asd"
+    def forward(self, prime_input, predict_len=100, temperature=0.8):
+        prime_tensor = CharacterDataSet.char_to_tensor(prime_input).to(self.device)
         generations = [t.item() for t in prime_tensor]
-        with torch.no_grad():
-            output, (hidden, cell_state) = self.model(prime_tensor, hidden, cell_state)
-        # output = [len(prime_input),input_output_size]
+        output, hc_states = self.model(prime_tensor) # output [len(prime_input),input_output_size], hc_states ([1,hidden_dim],[1,hidden_dim])
+
         for _ in range(predict_len):
             # Sample from the network as a multinomial distribution from the last output
             # This gets the last output from model(prime_tensor), also it gets the single and therefore last output in the further execution
-            output_dist = output[-1].div(temperature).exp()  # e^{logits / T}
-            t = torch.multinomial(output_dist, 1)
+            output_dist = output[-1].div(temperature).exp() # [input_output_size] # e^{logits / T}
+            t = torch.multinomial(output_dist, 1) # [1]
             generations.append(t.item())
-            with torch.no_grad():
-                output, (hidden, cell_state) = self.model(t, hidden, cell_state)
-            # output = [1,input_output_size]
+            output, hc_states = self.model(t, hc_states) # output [1,input_output_size], hc_states ([1,hidden_dim],[1,hidden_dim])
         gen_text = ''.join([string.printable[t] for t in generations])
-        self.model.train()
         return gen_text
-
-    def on_train_start(self) -> None:
-        pass
-        # with torch.no_grad():
-            # hidden_state, cell_state = self.model.get_zero_states()
-            # self.logger.experiment.add_graph(self.model, (torch.tensor(1).to(hidden_state.device),hidden_state,cell_state))
 
     def training_step(self, batch, batch_idx):
         loss = 0
         inputs, targets = batch # inputs = [portion_size], targets = [portion_size]
-        hidden_state, cell_state = self.model.get_zero_states()
 
-        output, _ = self.model(inputs, hidden_state, cell_state)
+        output, _ = self.model(inputs) # [portion_size, input_output_dim]
         loss = self.model.loss_func(output, targets)
 
-        self.log("train_loss", loss.item(), on_step=True, on_epoch=False, prog_bar=True) # on_step=True, on_epoch=True
+        self.log("train_loss", loss.item(), on_step=True, on_epoch=False, prog_bar=True)
         return loss
 
     def on_train_epoch_end(self):
-        gen_text = self.generate("Th", predict_len=100, temperature=0.75)
+        self.model.eval()
+        with torch.no_grad():
+            gen_text = self("Th", predict_len=100, temperature=0.75)
+        self.model.train()
         self.logger.experiment.add_text(tag="Generated", text_string=gen_text, global_step=self.global_step)
 
     def configure_optimizers(self):

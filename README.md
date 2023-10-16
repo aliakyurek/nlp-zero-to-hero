@@ -1,10 +1,24 @@
-# NLP
+## NLP
 Step by step NLP examples using PyTorch and Lightning
-* LSTM Character Generation with LSTMCell [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1RmW9hf9yijTz0pKBEjGl9b-E9FEKrrqO) 
+1. LSTM Character Generation with LSTMCell [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/LSTM_Character_Generation_with_LSTM.ipynb) 
   * Character RNN that's trained with a covid_19 faq file
   * After training, it generates text based on a prime input.
   * Generated text and loss values are recorded to and observed
-
+2. LSTM Character Generation with LSTM [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/LSTM_Character_Generation_with_LSTMCell.ipynb) 
+  * Same as above but this time it uses LSTM block
+3. Language translation with LSTM
+  * Seq2Seq training and inference using LSTM layer
+4. Language translation with bidirectional GRU
+  * Same as above but utilizes bidirectional GRU instead of LSTM
+5. Language translation with Bahdanau attention
+  * Same as above but utilizes Bahdanau attention (not self attention) 
+6. Language translation with padding optimization
+7. Language translation with transformers
+  * Basic implementation of transformer architecture for translation problem
 References
+* seq2seq examples by Ben Trevett https://github.com/bentrevett/pytorch-seq2seq
 * Deep Learning Course by Prof.Sebastian Raschka https://www.youtube.com/watch?v=1nqCZqDYPp0&list=PLTKMiZHVd_2KJtIXOW0zFhFfBaJJilH51
+* Deep Learning Tutorials by UvA https://uvadlc-notebooks.readthedocs.io/en/latest/index.html 
+* TSAI-DeepNLP-END2.0 by extensive-nlp https://github.com/extensive-nlp/TSAI-DeepNLP-END2.0/
+
     

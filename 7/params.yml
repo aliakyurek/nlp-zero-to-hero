@@ -1,0 +1,28 @@
+data:
+  dir: "data"
+  batch_size: 64
+  src_lang: "de"
+  trg_lang: "en"
+  max_tokens: 5000
+
+model:
+  emb_hid_dim: 256
+  ff_dim: 512
+  n_heads: 8
+  n_layers: 3
+  dropout: 0.1
+  max_seq_length: 200
+
+experiment:
+  lr: 0.0005
+
+trainer:
+  gpus: [1]
+  max_epochs: 20
+  monitor: "val_loss"
+  mode: "min"
+
+app:
+  name: "translation5_transform"
+  logs_dir: "logs"
+  manual_seed: 1234

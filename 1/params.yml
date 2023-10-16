@@ -3,7 +3,7 @@ model:
   hidden_size: 512
 
 data:
-  file_path: "1/covid19-faq.txt"
+  file_path: "data/covid19-faq.txt"
   portion_size: 200
   iters_per_step: 32
 
@@ -12,11 +12,11 @@ experiment:
 
 trainer:
   gpus: [1]
-  max_epochs: 20
+  max_epochs: 200
   monitor: "train_loss"
   mode: "min"
 
 app:
-  name: "lstm_generation"
-  logs_dir: "1/logs"
+  name: "lstm_generation_lstmcell"
+  logs_dir: "logs"
   manual_seed: 1234

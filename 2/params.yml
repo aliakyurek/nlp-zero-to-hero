@@ -3,7 +3,7 @@ model:
   hidden_size: 512
 
 data:
-  file_path: "2/covid19-faq.txt"
+  file_path: "data/covid19-faq.txt"
   portion_size: 200
   iters_per_step: 32
 
@@ -17,6 +17,6 @@ trainer:
   mode: "min"
 
 app:
-  name: "lstm_generation"
-  logs_dir: "2/logs"
+  name: "lstm_generation_lstm"
+  logs_dir: "logs"
   manual_seed: 1234

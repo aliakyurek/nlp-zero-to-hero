@@ -61,28 +61,19 @@ class LSTMGenerator(nn.Module):
         self.rnn = nn.LSTMCell(input_size=embed_size, hidden_size=hidden_size)
         self.fc = nn.Linear(hidden_size, input_output_size)
 
-    def forward(self, character, hidden_state, cell_state):
-        # character = 1
+    # character = 1
+    def forward(self, character, hc_states=None):
         # embed layer accepts any shaped output. It just adds a new dimension containing embedded vector.
-        embedded = self.embed(character)
-        # [embedding_dim]
+        embedded = self.embed(character) # [embedding_dim]
 
-        # LSTMCell layer accepts [embedding_dim].
-        hidden_state, cell_state = self.rnn(embedded, (hidden_state, cell_state))
-        output = self.fc(hidden_state)
-        # hidden_state = [hidden_dim]
-        # cell_state = [hidden_dim]
-        # output = [input_output_size]
+        # LSTMCell layer accepts [embedding_dim] and optional initial hidden and cell states
+        hidden_state, cell_state = self.rnn(embedded, hc_states) # both [hidden_dim]
+        output = self.fc(hidden_state) # [input_output_size]
 
         return output, (hidden_state, cell_state)
 
-    def get_zero_states(self):
-        zero_hidden = torch.zeros(self.rnn.hidden_size).type_as(self.fc.weight)
-        zero_cell = torch.zeros(self.rnn.hidden_size).type_as(self.fc.weight)
-        return (zero_hidden,zero_cell)
-
+    # outputs = [input_output_size], targets = 1
     def loss_func(self, outputs, targets):
-        # output = [input_output_size], targets = 1
         return F.cross_entropy(outputs,targets)
 
 class TextGenerationExperiment(pl.LightningModule):
@@ -91,49 +82,42 @@ class TextGenerationExperiment(pl.LightningModule):
         self.model = model
         self.lr = lr
 
-    def generate(self, prime_input, predict_len=100, temperature=0.8):
-        self.model.eval()
-        generations = []
-        hidden, cell_state = self.model.get_zero_states()
-        prime_tensor = CharacterDataSet.char_to_tensor(prime_input).to(hidden.device)
+    # prime_input = text like "asd"
+    def forward(self, prime_input, predict_len=100, temperature=0.8):
+        prime_tensor = CharacterDataSet.char_to_tensor(prime_input).to(self.device)
+        generations = [t.item() for t in prime_tensor]
         for t in prime_tensor:
-            generations.append(t.item())
-            with torch.no_grad():
-                output, (hidden, cell_state) = self.model(t, hidden, cell_state)
+            output, hc_states = self.model(t) # output [input_output_size], hc_states ([hidden_dim],[hidden_dim])
 
         for _ in range(predict_len):
             # Sample from the network as a multinomial distribution
-            output_dist = output.div(temperature).exp()  # e^{logits / T}
-            t = torch.multinomial(output_dist, 1)[0]
+            output_dist = output.div(temperature).exp()  # [input_output_size] # e^{logits / T}
+            # multinomial keeps dimension, so use [0] to get scalar tensor
+            t = torch.multinomial(output_dist, 1)[0] # scalar
             generations.append(t.item())
-            with torch.no_grad():
-                output, (hidden, cell_state) = self.model(t, hidden, cell_state)
+            output, hc_states = self.model(t, hc_states)
         gen_text = ''.join([string.printable[t] for t in generations])
-        self.model.train()
         return gen_text
 
-    def on_train_start(self) -> None:
-        pass
-        # with torch.no_grad():
-            # hidden_state, cell_state = self.model.get_zero_states()
-            # self.logger.experiment.add_graph(self.model, (torch.tensor(1).to(hidden_state.device),hidden_state,cell_state))
 
     def training_step(self, batch, batch_idx):
         loss = 0
         inputs, targets = batch
-        hidden_state, cell_state = self.model.get_zero_states()
+        hc_states = None
 
         for c in range(len(inputs)):
-            output, (hidden_state, cell_state) = self.model(inputs[c], hidden_state, cell_state)
+            output, hc_states = self.model(inputs[c], hc_states) # output [input_output_size], hc_states ([hidden_dim],[hidden_dim])
             loss += self.model.loss_func(output, targets[c])
 
         loss /= len(inputs)
-        self.log("train_loss", loss.item(), on_step=True, on_epoch=False, prog_bar=True) # on_step=True, on_epoch=True
+        self.log("train_loss", loss.item(), on_step=True, on_epoch=False, prog_bar=True)
         return loss
 
     def on_train_epoch_end(self):
-        gen_text = self.generate("Th", predict_len=100, temperature=0.75)
-
+        self.model.eval()
+        with torch.no_grad():
+            gen_text = self("Th", predict_len=100, temperature=0.75)
+        self.model.train()
         self.logger.experiment.add_text(tag="Generated", text_string=gen_text, global_step=self.global_step)
 
     def configure_optimizers(self):

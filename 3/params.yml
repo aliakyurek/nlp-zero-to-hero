@@ -1,0 +1,26 @@
+data:
+  dir: "data"
+  batch_size: 256
+  src_lang: "de"
+  trg_lang: "en"
+  max_tokens: 5000
+
+model:
+  emb_dim: 64
+  hid_dim: 128
+  n_layers: 2
+  dropout: 0.5
+
+experiment:
+  lr: 0.001
+
+trainer:
+  gpus: [1]
+  max_epochs: 60
+  monitor: "val_loss"
+  mode: "min"
+
+app:
+  name: "translation1_lstm"
+  logs_dir: "logs"
+  manual_seed: 1234
