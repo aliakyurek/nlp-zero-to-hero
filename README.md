@@ -15,6 +15,7 @@ Step by step NLP examples using PyTorch and Lightning
 6. Language translation with padding optimization
 7. Language translation with transformers
   * Basic implementation of transformer architecture for translation problem
+    
 References
 * seq2seq examples by Ben Trevett https://github.com/bentrevett/pytorch-seq2seq
 * Deep Learning Course by Prof.Sebastian Raschka https://www.youtube.com/watch?v=1nqCZqDYPp0&list=PLTKMiZHVd_2KJtIXOW0zFhFfBaJJilH51
