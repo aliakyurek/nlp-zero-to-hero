@@ -1,10 +1,10 @@
 ## NLP
 Step by step NLP examples using PyTorch and Lightning
-1. LSTM Character Generation with LSTMCell [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/LSTM_Character_Generation_with_LSTM.ipynb) 
+1. LSTM Character Generation with LSTMCell [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/LSTM_Character_Generation_with_LSTMCell.ipynb) 
   * Character RNN that's trained with a covid_19 faq file
   * After training, it generates text based on a prime input.
   * Generated text and loss values are recorded to and observed
-2. LSTM Character Generation with LSTM [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/LSTM_Character_Generation_with_LSTMCell.ipynb) 
+2. LSTM Character Generation with LSTM [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/LSTM_Character_Generation_with_LSTM.ipynb) 
   * Same as above but this time it uses LSTM block
 3. Language translation with LSTM
   * Seq2Seq training and inference using LSTM layer
