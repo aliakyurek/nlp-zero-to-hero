@@ -7,6 +7,7 @@ from typing import Optional
 from functools import partial
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+from datasets import load_dataset
 
 class TranslationDataSet(data.Dataset):
     #### class members ####b
@@ -31,14 +32,13 @@ class TranslationDataSet(data.Dataset):
         # to complete the epoch
         self.randomized_size = randomized_size
 
-        ds = tt.datasets.IWSLT2017(root='data', split=split, language_pair=self.lang_pair)
-        # next(iter(ds)) => ('Vielen Dank, Chris.\n', 'Thank you so much, Chris.\n')
+        ds = self.ds[split]['translation'] # ds: [{'de': 'Vielen Dank','en':'Thank you'},...]
+
         for raw in ds:
             pair = []
-            for i, lang in enumerate(self.lang_pair):
+            for lang in self.lang_pair:
                 # get sentence in the enumerated language as tokenized tensors and append it as one element of pair.
-                # and also skip the "\n" at the end of sentences in the dataset
-                tensor_ = self.tensorize(raw[i][:-1], lang)
+                tensor_ = self.tensorize(raw[lang], lang)
                 pair.append(tensor_)
             # after two elements of pair filled, add pair to data list.
             self.tokenized_data.append(pair)
@@ -73,12 +73,19 @@ class TranslationDataSet(data.Dataset):
     @classmethod
     def build(cls, lang_pair, max_tokens):
         cls.lang_pair = lang_pair
+        s,t = cls.lang_pair
 
         # be aware that vocab should be built using only training data
-        ds = tt.datasets.IWSLT2017(root='data', split="train", language_pair=lang_pair)
-        # next(iter(ds)) => ('Vielen Dank, Chris.\n', 'Thank you so much, Chris.\n')
+        cls.ds = load_dataset ('iwslt2017', f'iwslt2017-{s}-{t}')
+
+        # DatasetDict({
+        #     train: Dataset({
+        #         features: ['translation'],
+        #         num_rows: 206112
+        #     })
+
         unk_idx = cls.SPECIAL_TOKENS.index('<unk>')
-        for i,lang in enumerate(lang_pair):
+        for lang in lang_pair:
             # Create torchtext's Vocab object. As tokenizer we use spacy
             tokenizer = tt.data.utils.get_tokenizer('spacy', language=lang)
             # I limit the number of tokens to 10000. That means most frequent 10000 tokens will have a value.
@@ -88,7 +95,7 @@ class TranslationDataSet(data.Dataset):
             # What important is to have unique values of them and use them correctly.
             # map(lambda x:tokenizer(x[i].lower()), iter) This generator is used to traverse
             # all entry of pairs and tokenize the correct language of pair
-            cls.token_to_int[lang] = tt.vocab.build_vocab_from_iterator(map(lambda x:tokenizer(x[i].lower()), ds),
+            cls.token_to_int[lang] = tt.vocab.build_vocab_from_iterator(map(lambda x:tokenizer(x[lang].lower()), cls.ds['train']['translation']),
                                                                            min_freq=2,
                                                                            specials=cls.SPECIAL_TOKENS,
                                                                            special_first=True,max_tokens=max_tokens)
@@ -136,17 +143,12 @@ class TranslationDataModule(pl.LightningDataModule):
         en_batch = torch.nn.utils.rnn.pad_sequence(en_batch, padding_value=pad_idx, batch_first=batch_first)
         return de_batch, en_batch, lengths
 
-    # prepare_data is called from the main process. It is not recommended to assign state here. Just downloading files
-    # so that the further calls won't download again.
-    def prepare_data(self):
-        tt.datasets.IWSLT2017(root='data', split=('train', 'valid', 'test'), language_pair=self.lang_pair)
-
     # setup is called from every process across all the nodes. Setting state here is recommended.
     def setup(self, stage: Optional[str] = None):
 
         if stage == "fit":
             self.train_dataset = TranslationDataSet(split="train")
-            self.valid_dataset = TranslationDataSet(split="valid")
+            self.valid_dataset = TranslationDataSet(split="validation")
 
         if stage == "test":
             self.test_dataset = TranslationDataSet(split="test")
