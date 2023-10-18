@@ -10,8 +10,8 @@ Step by step NLP examples using PyTorch and Lightning
   * Seq2Seq training and inference using LSTM layer
 4. Language translation with GRU [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/Language_translation_with_GRU.ipynb) 
   * Same as above but utilizes GRU instead of LSTM and more input used for GRU and decoder outputs
-5. Language translation with Bahdanau attention
-  * Same as above but utilizes Bahdanau attention (not self attention) 
+5. Language translation with Bahdanau attention [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/Language_translation_with_GRU_and_Bahdanau.ipynb)
+  * Same as above but utilizes Bahdanau attention (not self attention) using bidirectional GRU
 6. Language translation with padding optimization
 7. Language translation with transformers
   * Basic implementation of transformer architecture for translation problem
