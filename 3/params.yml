@@ -1,6 +1,6 @@
 data:
   dir: "data"
-  batch_size: 256
+  batch_size: 128
   src_lang: "de"
   trg_lang: "en"
   max_tokens: 5000

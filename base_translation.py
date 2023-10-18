@@ -5,8 +5,6 @@ import pytorch_lightning as pl
 import torchtext as tt
 from typing import Optional
 from functools import partial
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 from datasets import load_dataset
 
 class TranslationDataSet(data.Dataset):
@@ -32,7 +30,7 @@ class TranslationDataSet(data.Dataset):
         # to complete the epoch
         self.randomized_size = randomized_size
 
-        ds = self.ds[split]['translation'] # ds: [{'de': 'Vielen Dank','en':'Thank you'},...]
+        ds = self.ds[split]['translation'] # ds: [{'de': 'Vielen Dank.','en':'Thank you.'},...]
 
         for raw in ds:
             pair = []
@@ -156,28 +154,10 @@ class TranslationDataModule(pl.LightningDataModule):
         self.collate_fn = partial(self.generate_batch, self.batch_first, self.pad_idx)
 
     def train_dataloader(self):
-        return data.DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=False, collate_fn=self.collate_fn)
+        return data.DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=False,
+                               collate_fn=self.collate_fn)
 
     def val_dataloader(self):
-        return data.DataLoader(self.valid_dataset, batch_size=self.batch_size, shuffle=False, collate_fn=self.collate_fn)
+        return data.DataLoader(self.valid_dataset, batch_size=self.batch_size, shuffle=False,
+                               collate_fn=self.collate_fn)
 
-
-def get_attention_map(sentence, translation, attention):
-    fig,ax = plt.subplots(figsize=(10, 10))
-
-    attention = attention.cpu().detach().numpy()
-
-    cax = ax.matshow(attention, cmap='bone')
-
-    ax.tick_params(labelsize=10)
-
-    x_ticks = [''] + sentence
-    y_ticks = [''] + translation
-
-    ax.set_xticklabels(x_ticks, rotation=45)
-    ax.set_yticklabels(y_ticks)
-
-    ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
-    ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
-
-    return plt.gcf()

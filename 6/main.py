@@ -151,12 +151,9 @@ class Seq2Seq(nn.Module):
     # e.g. if teacher_forcing_ratio is 0.75 we use ground-truth inputs 75% of the time
     def forward(self, src, src_lens, trg=None, teacher_forcing_ratio=0.75):
         inference = trg is None
-        batch_size = src.shape[1] # 256
         trg_len = trg.shape[0] if not inference else 1000
-        trg_vocab_size = self.m_decoder.output_dim # 5000
-
-        # tensor to store decoder outputs,trg_len-1 is used since we don't need bos in the output.
-        outputs = torch.zeros(trg_len-1, batch_size, trg_vocab_size).to(src.device)
+        # list to store decoder outputs
+        outputs = []
 
         # last hidden state of the encoder is used as the initial hidden state of the decoder
         enc_outputs, hidden = self.m_encoder(src, src_lens)
@@ -175,30 +172,29 @@ class Seq2Seq(nn.Module):
         for t in range(trg_len-1):
             # insert input token embedding, previous hidden and previous cell states
             # receive output tensor (predictions) and new hidden and cell states
-            output, hidden = self.m_decoder(input, hidden, enc_outputs, src_mask)
-            # output = [batch_size, trg_vocab_size]
-            # hidden = [batch_size, hid_dim]
+            output, hidden = self.m_decoder(input, hidden, enc_outputs, src_mask) # [batch_size, trg_vocab_size], [batch_size, hid_dim]
 
-            # place predictions in a tensor holding predictions for each token
-            outputs[t] = output
+            # add predictions to the list
+            outputs.append(output)
 
             # decide if we are going to use teacher forcing or not
             teacher_force = random.random() < teacher_forcing_ratio
 
-            # get the highest predicted token from our predictions
-            top1 = output.argmax(1) # [256]
+            # if teacher forcing, use actual next token as next input, if not, use predicted token
+            if teacher_force:
+                input = trg[t + 1] # [batch_size]
+            else:
+                # get the highest predicted token from our predictions
+                input = output.argmax(1)  # [batch_size]
 
-            # if teacher forcing, use actual next token as next input
-            # if not, use predicted token
-            input = trg[t+1] if teacher_force else top1
             if inference:
                 if input.item() == self.specials['eos']:
-                    return outputs[:t,...]
+                    return torch.stack(outputs[:-1])
 
         # if we are in inferences mode and output not generated so far, return None
         if inference:
             return None
-        return outputs
+        return torch.stack(outputs)
 
 class TranslationExperiment(pl.LightningModule):
     def __init__(self, model, lr):
@@ -254,7 +250,7 @@ class TranslationExperiment(pl.LightningModule):
         return loss
 
     def on_validation_epoch_end(self):
-        sentence = "Eine Frau spielt ein Lied."
+        sentence = "Ich liebe dich."
         # pl automatically sets model to eval mode and disables grad
         translation = self([sentence])[0]
         self.logger.experiment.add_text("Translation",f"{sentence}->{translation} | Loss:{self.trainer.logged_metrics['val_loss'].item():.3f}",
