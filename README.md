@@ -6,7 +6,7 @@ Step by step NLP examples using PyTorch and Lightning
   * Generated text and loss values are recorded to and observed
 2. LSTM Character Generation with LSTM [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/LSTM_Character_Generation_with_LSTM.ipynb) 
   * Same as above but this time it uses LSTM block
-3. Language translation with LSTM
+3. Language translation with LSTM [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/Language_translation_with_LSTM.ipynb) 
   * Seq2Seq training and inference using LSTM layer
 4. Language translation with bidirectional GRU
   * Same as above but utilizes bidirectional GRU instead of LSTM
