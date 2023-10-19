@@ -1,6 +1,5 @@
 # IMPORTS
 from torch import nn
-import torch.nn.functional as F
 import base
 from base_translation import *
 
@@ -312,7 +311,7 @@ class TranslationExperiment(pl.LightningModule):
         return loss
 
     def on_validation_epoch_end(self):
-        sentence = "Eine Frau spielt ein Lied."
+        sentence = "Ich liebe dich."
         # pl automatically sets model to eval mode and disables grad
         translation = self([sentence])[0]
         self.logger.experiment.add_text("Translation",f"{sentence}->{translation} | Loss:{self.trainer.logged_metrics['val_loss'].item():.3f}",

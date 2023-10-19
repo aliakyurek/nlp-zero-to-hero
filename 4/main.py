@@ -13,9 +13,7 @@ class Encoder(nn.Module):
     def forward(self, src):
         embedded = self.nn_embedding(src)  # [src len, batch size, emb dim]
 
-        outputs, hidden = self.nn_rnn(embedded)
-        # outputs = [src len, batch size, hid dim]
-        # hidden = [1, batch size, hid dim]
+        outputs, hidden = self.nn_rnn(embedded)# [src len, batch size, hid dim], [1, batch size, hid dim]
 
         # I just need the hidden state. This accumulated hidden state will represent
         # the input sentence somehow.
@@ -28,7 +26,6 @@ class Decoder(nn.Module):
         self.output_dim = output_dim
         self.nn_embedding = nn.Embedding(output_dim, emb_dim)
 
-        # Actually since we decode one by one, we could use LSTMCell here
         self.nn_rnn = nn.GRU(emb_dim + hid_dim, hid_dim)
         # the fully connected layer at the end will results a single word.
         self.nn_fc_out = nn.Linear(emb_dim + hid_dim*2, output_dim)
@@ -50,8 +47,7 @@ class Decoder(nn.Module):
         # output = [1, batch size, hid dim] Here 1 is due to only one element in sequence
         # hidden = [n layers * n directions (1), batch size, hid dim] Here 1 is due to only one layer in GRU
 
-        output = torch.cat((rnn_input, hidden), dim=-1)
-        # output = [1, batch size, emb_dim + hid dim*2]
+        output = torch.cat((rnn_input, hidden), dim=-1) # [1, batch size, emb_dim + hid dim*2]
 
         prediction = self.nn_fc_out(output.squeeze(0)) # [batch size, trg_vocab_size]
         return prediction, hidden

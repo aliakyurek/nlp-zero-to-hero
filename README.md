@@ -1,10 +1,10 @@
 ## NLP
 Step by step NLP examples using PyTorch and Lightning
-1. LSTM Character Generation with LSTMCell [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/LSTM_Character_Generation_with_LSTMCell.ipynb) 
+1. Character Generation with LSTMCell [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/Character_Generation_with_LSTMCell.ipynb) 
   * Character RNN that's trained with a covid_19 faq file
   * After training, it generates text based on a prime input.
   * Generated text and loss values are recorded to and observed
-2. LSTM Character Generation with LSTM [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/LSTM_Character_Generation_with_LSTM.ipynb) 
+2. Character Generation with LSTM [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/Character_Generation_with_LSTM.ipynb) 
   * Same as above but this time it uses LSTM block
 3. Language translation with LSTM [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/Language_translation_with_LSTM.ipynb) 
   * Seq2Seq training and inference using LSTM layer
@@ -14,7 +14,7 @@ Step by step NLP examples using PyTorch and Lightning
   * Same as above but utilizes Bahdanau attention (not self attention) using bidirectional GRU
 6. Language translation with padding optimization [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/Language_translation_with_paddings_optimized.ipynb)
   * Same as above but utilizes pack_padded_sequence, pad_packed_sequence, and source masking in attention to optimize paddings
-7. Language translation with transformers
+7. Language translation with transformers [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aliakyurek/nlp/blob/main/Language_translation_with_transformers.ipynb)
   * Basic implementation of transformer architecture for translation problem
     
 References
