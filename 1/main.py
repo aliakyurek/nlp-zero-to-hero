@@ -11,21 +11,29 @@ import torch.nn.functional as F
 import base
 
 class CharacterDataSet(data.IterableDataset):
+    # handle only lower case characters,digits,space and '.'
+    vocab = tuple(string.printable[:36]) + (' ','.')
     def __init__(self, file_path):
         self.portion_size = 200
-        self.iters_per_step = 32
+        self.iters_per_epoch = 32
         with open(file_path,'r', encoding='utf-8') as f:
             file_content = f.read()
 
-        file_content = unidecode.unidecode(file_content)
-        self.file_content = re.sub(' +', ' ', file_content)
+        # approximate non-ascii characters to ascii (like Ş to S) and lower chars
+        file_content = unidecode.unidecode(file_content).lower()
+        # drop extra white spaces
+        file_content = re.sub(' +', ' ', file_content)
+        # drop special characters.
+        self.file_content = re.sub('[^a-z0-9 \.]', '', file_content)
 
     def __iter__(self):
-        for i in range(self.iters_per_step):
-            tokenized = self.char_to_tensor(self.random_portion())
+        # in each epoch, we get random portions from text. So to have a limit, we use iters_per_epoch to stop yielding.
+        for i in range(self.iters_per_epoch):
+            portion = self.random_portion() # "r second vaccine dose..."
+            tokenized = self.char_to_tensor(portion) # tokenize
             inputs = tokenized[:-1]
             targets = tokenized[1:]
-            yield (inputs, targets)
+            yield (inputs, targets) # target is one char shift of input[-1] "programmin" -> "rogramming"
 
     def random_portion(self):
         start_index = random.randint(0, len(self.file_content)-self.portion_size)
@@ -34,11 +42,7 @@ class CharacterDataSet(data.IterableDataset):
 
     @staticmethod
     def char_to_tensor(text):
-        for c in text:
-            if(c not in string.printable):
-                print(c)
-                quit(0)
-        lst = [string.printable.index(c) for c in text]
+        lst = [CharacterDataSet.vocab.index(c) for c in text]
         tensor = torch.tensor(lst,dtype=torch.long)
         return tensor
 
@@ -61,7 +65,7 @@ class LSTMGenerator(nn.Module):
         self.rnn = nn.LSTMCell(input_size=embed_size, hidden_size=hidden_size)
         self.fc = nn.Linear(hidden_size, input_output_size)
 
-    # character = 1
+    # character index = scalar
     def forward(self, character, hc_states=None):
         # embed layer accepts any shaped output. It just adds a new dimension containing embedded vector.
         embedded = self.embed(character) # [embedding_dim]
@@ -72,9 +76,10 @@ class LSTMGenerator(nn.Module):
 
         return output, (hidden_state, cell_state)
 
-    # outputs = [input_output_size], targets = 1
-    def loss_func(self, outputs, targets):
-        return F.cross_entropy(outputs,targets)
+    # logits = [input_output_size], character index = scalar
+    def loss_func(self, logits, character):
+        # cross entropy expects unnormalized logits as input and class index as target
+        return F.cross_entropy(logits, character)
 
 class TextGenerationExperiment(pl.LightningModule):
     def __init__(self, model, lr):
@@ -82,21 +87,26 @@ class TextGenerationExperiment(pl.LightningModule):
         self.model = model
         self.lr = lr
 
-    # prime_input = text like "asd"
+    # prime_input = text like "the"
     def forward(self, prime_input, predict_len=100, temperature=0.8):
         prime_tensor = CharacterDataSet.char_to_tensor(prime_input).to(self.device)
         generations = [t.item() for t in prime_tensor]
+        hc_states = None
         for t in prime_tensor:
-            output, hc_states = self.model(t) # output [input_output_size], hc_states ([hidden_dim],[hidden_dim])
+            output, hc_states = self.model(t, hc_states) # output [input_output_size], hc_states ([hidden_dim],[hidden_dim])
 
         for _ in range(predict_len):
-            # Sample from the network as a multinomial distribution
+            # Sample from the network as a multinomial distribution.
+            # output_dist not have to sum to one but it should be non-negative, exp ensures that they are positive
+            # and it keeps the right order. Temperature determines how sharp the probability distribution be for the
+            # maximum one. Because when the outputs divided by a floating number 0..1, their value will be bigger
+            # also considering the exponentiation.
             output_dist = output.div(temperature).exp()  # [input_output_size] # e^{logits / T}
             # multinomial keeps dimension, so use [0] to get scalar tensor
             t = torch.multinomial(output_dist, 1)[0] # scalar
             generations.append(t.item())
             output, hc_states = self.model(t, hc_states)
-        gen_text = ''.join([string.printable[t] for t in generations])
+        gen_text = ''.join([CharacterDataSet.vocab[t] for t in generations])
         return gen_text
 
 
@@ -116,7 +126,7 @@ class TextGenerationExperiment(pl.LightningModule):
     def on_train_epoch_end(self):
         self.model.eval()
         with torch.no_grad():
-            gen_text = self("Th", predict_len=100, temperature=0.75)
+            gen_text = self("the", predict_len=100, temperature=0.75)
         self.model.train()
         self.logger.experiment.add_text(tag="Generated", text_string=gen_text, global_step=self.global_step)
 
@@ -128,7 +138,7 @@ params = base.init_env("1/params.yml")
 p = params['data']
 data_module = CharacterDataModule(p['file_path'])
 p = params['model']
-model = LSTMGenerator(input_output_size=len(string.printable), **p)
+model = LSTMGenerator(input_output_size=len(CharacterDataSet.vocab), **p)
 
 pl_app = base.PlApp(data_module=data_module, model=model, cls_experiment=TextGenerationExperiment,
                     params=params)

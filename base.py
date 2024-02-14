@@ -55,7 +55,7 @@ class PlApp:
 
     def train(self):
         # Even though we load the checkpoint in constructor, if it's loaded to continue training,
-        # load_from_checkpoint only restores model weights. However, fit restores model weights (a little double work but it's OK),
-        # current epoch, current global step, optimizer states etc.
+        # load_from_checkpoint only restores model weights. However, fit not only restores model weights (a little double work but it's OK),
+        # but also current epoch, current global step, optimizer states etc.
         return self.trainer.fit(self.experiment, datamodule=self.data_module, ckpt_path=self.ckpt_path)
 
