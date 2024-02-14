@@ -109,7 +109,6 @@ class TextGenerationExperiment(pl.LightningModule):
         gen_text = ''.join([CharacterDataSet.vocab[t] for t in generations])
         return gen_text
 
-
     def training_step(self, batch, batch_idx):
         loss = 0
         inputs, targets = batch
