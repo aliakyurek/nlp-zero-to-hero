@@ -1,6 +1,9 @@
 # 1_Character_Generation_with_LSTMCell
-# In this experiment, we implement an RNN (LSTMCell specifically) character generator based on a
-# covid-19 dataset. RNNCell or LSTMCell is the most basic element of sequencing.
+# In this experiment, we implement an recurrent neural network (LSTMCell specifically) based character generator using a covid-19 dataset.
+# RNNCell or LSTMCell is the most basic element of sequential data processing where you iterate the input data and update the hidden state
+# manually. Following classes are inside the external Python module base_text:
+# + CharacterDataSet(data.IterableDataset): Parses and processes dataset.
+# + CharacterDataModule(pl.LightningDataModule): Handles batching, data loading, utilizes CharacterDataSet.
 
 import torch
 import pytorch_lightning as pl

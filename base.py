@@ -46,7 +46,7 @@ class PlApp:
         self.trainer = pl.Trainer(accelerator="auto", max_epochs=self.params['trainer']['max_epochs'],
                                   benchmark=False, deterministic=True, num_sanity_val_steps=0,
                                   enable_model_summary=False, enable_progress_bar=True,
-                                  logger=None, callbacks=[checkpoint_callback],
+                                  logger=logger, callbacks=[checkpoint_callback],
                                   limit_train_batches=None, limit_val_batches=None, limit_test_batches=None,
                                   gradient_clip_val=1.0)
 
