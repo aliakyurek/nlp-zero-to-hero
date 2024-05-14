@@ -1,8 +1,11 @@
-# IMPORTS
+# Language_translation_with_GRU_and_Bahdanau
+import random
+import torch
 from torch import nn
 import torch.nn.functional as F
 import base
-from base_translation import *
+import base_translation
+
 
 class Encoder(nn.Module):
     def __init__(self, input_dim, emb_dim, hid_dim, bidirectional):
@@ -181,7 +184,7 @@ class Seq2Seq(nn.Module):
             teacher_force = random.random() < teacher_forcing_ratio
 
             # if teacher forcing, use actual next token as next input, if not, use predicted token
-            if teacher_force:
+            if not inference and teacher_force:
                 input = trg[t + 1] # [batch_size]
             else:
                 # get the highest predicted token from our predictions
@@ -210,13 +213,13 @@ class TranslationExperiment(pl.LightningModule):
         results = []
         for s in X:
             # tensorize and append&prepend bos and eos
-            t = TranslationDataSet.tensorize(s, "de").to(self.device)
+            t = base_translation.TranslationDataSet.tensorize(s, "de").to(self.device)
 
             # add dummy batch dimension and make teacher_forcing_ratio=0 as we'll use always what's predicted before.
             outs = self.model(t.unsqueeze(dim=1), [t.shape[0]], teacher_forcing_ratio=0.)
             if outs is not None:
                 word_ids = outs.argmax(-1).squeeze(dim=1).tolist()
-                translation = " ".join(TranslationDataSet.token_to_int['en'].lookup_tokens(word_ids))
+                translation = " ".join(base_translation.TranslationDataSet.token_to_int['en'].lookup_tokens(word_ids))
             else:
                 translation = "No translation"
             results.append(translation)
@@ -260,7 +263,7 @@ class TranslationExperiment(pl.LightningModule):
 
 params = base.init_env("6/params.yml")
 p = params['data']
-data_module = TranslationDataModule(batch_size=p['batch_size'],
+data_module = base_translation.TranslationDataModule(batch_size=p['batch_size'],
                                     src_lang=p['src_lang'],
                                     trg_lang=p['trg_lang'],
                                     max_tokens=p['max_tokens'])
@@ -276,7 +279,7 @@ model = Seq2Seq(enc, dec, specials={'bos':data_module.bos_idx,
                                              'eos':data_module.eos_idx,
                                              'pad':data_module.pad_idx})
 
-pl_app = base.PlApp(data_module=data_module, model=model, cls_experiment=TranslationExperiment,
+pl_app = base.PlApp(data_module=data_module, model=model, cls_experiment=base_translation.TranslationExperiment,
                          params=params)
 pl_app.train()
 
