@@ -17,6 +17,6 @@ trainer:
   mode: "min"
 
 app:
-  name: "lstm_generation_lstm"
+  name: "2_Character_Generation_with_LSTM"
   logs_dir: "logs"
   manual_seed: 1234

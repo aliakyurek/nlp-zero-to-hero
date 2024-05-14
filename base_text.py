@@ -40,7 +40,7 @@ class CharacterDataSet(data.IterableDataset):
 
     @staticmethod
     def char_to_tensor(text):
-        lst = [CharacterDataSet.vocab.index(c) for c in text]
+        lst = [CharacterDataSet.vocab.index(c) for c in text.lower()]
         tensor = torch.tensor(lst, dtype=torch.long)
         return tensor
 

@@ -87,15 +87,3 @@ pl_app.train()
 pl_app.experiment.eval()
 with torch.no_grad():
     translation = pl_app.experiment.forward([sentence])[0]'''
-
-
-
-
-
-
-
-
-
-
-
-

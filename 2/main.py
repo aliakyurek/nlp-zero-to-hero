@@ -2,7 +2,13 @@
 # In this experiment, we replace LSTMCell with usual LSTM layer, so that we get rid of for loop in our
 # LSTMGenerator module. This improves performance since custom for loop in training_step is removed
 # and the sequence is internally traversed by fast PyTorch.
+# Following classes are inside the external Python module base_text:
+# + CharacterDataSet(data.IterableDataset): Parses and processes dataset.
+# + CharacterDataModule(pl.LightningDataModule): Handles batching, data loading, utilizes CharacterDataSet.
 
+import sys
+import os
+sys.path.append(os.getcwd())
 import string
 import torch
 import pytorch_lightning as pl
@@ -10,7 +16,6 @@ from torch import nn
 import torch.nn.functional as F
 import base
 import base_text
-
 
 class LSTMGenerator(nn.Module):
     def __init__(self, input_output_size, embed_size, hidden_size):
@@ -38,7 +43,6 @@ class LSTMGenerator(nn.Module):
     def loss_func(self, outputs, targets):
         return F.cross_entropy(outputs, targets)
 
-
 class TextGenerationExperiment(pl.LightningModule):
     def __init__(self, model, lr):
         super().__init__()
@@ -62,7 +66,7 @@ class TextGenerationExperiment(pl.LightningModule):
 
             output, hc_states = self.model(t, hc_states)
             # output [1,input_output_size], hc_states ([1,hidden_dim],[1,hidden_dim])
-        gen_text = ''.join([string.printable[t] for t in generations])
+        gen_text = ''.join([base_text.CharacterDataSet.vocab[t] for t in generations])
         return gen_text
 
     def training_step(self, batch, batch_idx):
@@ -77,13 +81,12 @@ class TextGenerationExperiment(pl.LightningModule):
     def on_train_epoch_end(self):
         self.model.eval()
         with torch.no_grad():
-            gen_text = self("Th", predict_len=100, temperature=0.25)
+            gen_text = self("The", predict_len=100, temperature=0.25)
         self.model.train()
         self.logger.experiment.add_text(tag="Generated", text_string=gen_text, global_step=self.global_step)
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.model.parameters(), lr=self.lr)
-
 
 params = base.init_env("2/params.yml")
 p = params['data']

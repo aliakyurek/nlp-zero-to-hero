@@ -19,6 +19,6 @@ trainer:
   mode: "min"
 
 app:
-  name: "translation2_gru"
+  name: "4_Language_translation_with_GRU"
   logs_dir: "logs"
   manual_seed: 1234

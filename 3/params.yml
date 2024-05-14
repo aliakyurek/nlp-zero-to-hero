@@ -21,6 +21,6 @@ trainer:
   mode: "min"
 
 app:
-  name: "translation1_lstm"
+  name: "3_Language_translation_with_LSTM"
   logs_dir: "logs"
   manual_seed: 1234

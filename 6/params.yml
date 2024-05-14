@@ -20,6 +20,6 @@ trainer:
   mode: "min"
 
 app:
-  name: "translation4_att_opt"
+  name: "6_Language_translation_with_optimized_paddings"
   logs_dir: "logs"
   manual_seed: 1234

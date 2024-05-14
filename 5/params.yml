@@ -20,6 +20,6 @@ trainer:
   mode: "min"
 
 app:
-  name: "translation3_att"
+  name: "4_Language_translation_with_GRU_and_Bahdanau"
   logs_dir: "logs"
   manual_seed: 1234

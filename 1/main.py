@@ -1,18 +1,22 @@
 # 1_Character_Generation_with_LSTMCell
-# In this experiment, we implement an recurrent neural network (LSTMCell specifically) based character generator using a covid-19 dataset.
+# In this experiment, we implement a recurrent neural network (specifically LSTMCell) based character generator using a covid-19 dataset.
 # RNNCell or LSTMCell is the most basic element of sequential data processing where you iterate the input data and update the hidden state
-# manually. Following classes are inside the external Python module base_text:
+# manually.
+# Following classes are inside the external Python module base_text:
 # + CharacterDataSet(data.IterableDataset): Parses and processes dataset.
 # + CharacterDataModule(pl.LightningDataModule): Handles batching, data loading, utilizes CharacterDataSet.
 
+
+import sys
+import os
+sys.path.append(os.getcwd())
 import torch
 import pytorch_lightning as pl
 from torch import nn
 import torch.nn.functional as F
 import base
 import base_text
-
-
+    
 class LSTMGenerator(nn.Module):
     def __init__(self, input_output_size, embed_size, hidden_size):
         super().__init__()
@@ -35,7 +39,6 @@ class LSTMGenerator(nn.Module):
     def loss_func(self, logits, character):
         # cross entropy expects unnormalized logits as input and class index as target
         return F.cross_entropy(logits, character)
-
 
 class TextGenerationExperiment(pl.LightningModule):
     def __init__(self, model, lr):
@@ -84,13 +87,12 @@ class TextGenerationExperiment(pl.LightningModule):
     def on_train_epoch_end(self):
         self.model.eval()
         with torch.no_grad():
-            gen_text = self("the", predict_len=100, temperature=0.25)
+            gen_text = self("The", predict_len=100, temperature=0.25)
         self.model.train()
         self.logger.experiment.add_text(tag="Generated", text_string=gen_text, global_step=self.global_step)
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.model.parameters(), lr=self.lr)
-
 
 params = base.init_env("1/params.yml")
 p = params['data']
